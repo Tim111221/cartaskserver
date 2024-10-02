@@ -3,15 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server</title>
+    <title>Server - SQL.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
 </head>
 <body>
-    <h1>Hello from the server!</h1>
+    <h1>SQL.js Server Simulated</h1>
     <script>
-        // Respond to requests
-        if (location.pathname === "/server.html") {
-            document.write("Hello from server");
+        let db = null;
+
+        // Initialize the SQL.js database
+        initDatabase();
+
+        async function initDatabase() {
+            const SQL = await initSqlJs({ locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${filename}` });
+            db = new SQL.Database();
+            // Create a table if not exists
+            db.run("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT);");
         }
+
+        // This function handles registration
+        function registerUser(username, password) {
+            if (db) {
+                const stmt = db.prepare("INSERT INTO users VALUES (?, ?)");
+                stmt.run([username, password]);
+                stmt.free(); // Free resources
+                return "Registration successful!";
+            }
+            return "Database not ready.";
+        }
+
+        // This function handles login
+        function loginUser(username, password) {
+            if (db) {
+                const stmt = db.prepare("SELECT * FROM users WHERE username = ? AND password = ?");
+                stmt.bind([username, password]);
+                let loginSuccess = false;
+
+                while (stmt.step()) {
+                    loginSuccess = true;
+                }
+
+                stmt.free(); // Free resources
+                return loginSuccess ? "Login successful!" : "Invalid credentials.";
+            }
+            return "Database not ready.";
+        }
+
+        // Expose functions to be called by the client-side (app.html)
+        window.serverApi = {
+            registerUser: registerUser,
+            loginUser: loginUser
+        };
     </script>
 </body>
 </html>
