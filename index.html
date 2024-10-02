@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS Home Check</title>
+    <title>GPS Time Tracker</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,6 +14,7 @@
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            margin: 5px;
         }
         #message {
             margin-top: 20px;
@@ -22,21 +23,28 @@
     </style>
 </head>
 <body>
-    <h1>GPS Home Check</h1>
+    <h1>GPS Time Tracker</h1>
     <p>Are you at home?</p>
     <button id="yesBtn">Yes</button>
     <button id="noBtn">No</button>
+    
+    <div>
+        <button id="startBtn" disabled>Start</button>
+        <button id="finishBtn" disabled>Finish</button>
+    </div>
     <div id="message"></div>
 
     <script>
         // Define your home coordinates (latitude, longitude)
         const homeCoordinates = {
-            latitude: 38.420518, // Replace with your home latitude
-            longitude: -121.431688 // Replace with your home longitude
+            latitude: 37.7749, // Replace with your home latitude
+            longitude: -122.4194 // Replace with your home longitude
         };
 
         // Radius in meters
         const radius = 50;
+        let startTime = null;
+        let endTime = null;
 
         // Function to check distance
         function isWithinRadius(userCoords) {
@@ -65,7 +73,8 @@
                     };
 
                     if (isWithinRadius(userCoords)) {
-                        document.getElementById('message').innerText = "Good job!";
+                        document.getElementById('message').innerText = "Good job! You can start.";
+                        document.getElementById('startBtn').disabled = false;
                     } else {
                         document.getElementById('message').innerText = "Not true bro.";
                     }
@@ -80,6 +89,46 @@
         // Function to handle No button click
         document.getElementById('noBtn').addEventListener('click', () => {
             document.getElementById('message').innerText = "You answered no.";
+        });
+
+        // Function to handle Start button click
+        document.getElementById('startBtn').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userCoords = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+
+                    if (isWithinRadius(userCoords)) {
+                        startTime = new Date();
+                        document.getElementById('message').innerText = "Started at " + startTime.toLocaleTimeString();
+                        document.getElementById('finishBtn').disabled = false;
+                    } else {
+                        document.getElementById('message').innerText = "Caution: Not in zone. Cannot start.";
+                    }
+                });
+            }
+        });
+
+        // Function to handle Finish button click
+        document.getElementById('finishBtn').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userCoords = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+
+                    if (isWithinRadius(userCoords)) {
+                        endTime = new Date();
+                        const totalTime = Math.abs(endTime - startTime) / 1000 / 3600; // Total time in hours
+                        document.getElementById('message').innerText = "Total time: " + totalTime.toFixed(2) + " hours";
+                    } else {
+                        document.getElementById('message').innerText = "Caution: Not in zone. Total time: 0 hours.";
+                    }
+                });
+            }
         });
     </script>
 </body>
