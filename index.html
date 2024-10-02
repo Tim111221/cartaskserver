@@ -1,30 +1,73 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login</title>
-  <link rel = "stylesheet" href = "main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Notes App</title>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #notes { margin-top: 20px; }
+        .note { background-color: #f0f0f0; padding: 10px; margin-bottom: 10px; position: relative; }
+        .delete-btn { position: absolute; right: 10px; top: 10px; cursor: pointer; }
+    </style>
 </head>
 <body>
-  <div class = "login-container">
-    <div id= "main">
-      <h1>Sign In</h1>
-      <input id = "email" type = "text" placeholder = "Email"></input>
-      <input id = "password" type = "password" placeholder = "Password"></input>
-      <button id = "submit">Submit</button>
-      <p><span>or</span></p>
-      <button id = "sign-up">Sign Up</button>
-    </div>
+    <h1>Simple Notes App</h1>
+    <textarea id="noteInput" rows="4" cols="50" placeholder="Enter your note here"></textarea>
+    <br>
+    <button onclick="addNote()">Add Note</button>
+    <div id="notes"></div>
 
-    <div id = "create-acct">
-      <h1>Create an Account</h1>
-      <input id = "email-signup" type = "text" placeholder = "Email *"></input>
-  <input id = "confirm-email-signup" type = "email" placeholder = "Confirm Email *"></input>
-      <input id = "password-signup" type = "password" placeholder = "Password *"></input>
-      <input id = "confirm-password-signup" type = "password" placeholder = "Confirm Password *"></input>
-      <button id = "create-acct-btn">Create Account</button>
-      <button id = "return-btn">Return to Login</button>
-    </div>
-  </div>
-  <script type = "module" src = "script.js"></script>
+    <script>
+        // Initialize Firebase (replace with your own config)
+        const firebaseConfig = {
+          apiKey: "AIzaSyAb6YyOLjk8pB63fginZzoxuFBQcygRqg8",
+          authDomain: "cartasker-ce66a.firebaseapp.com",
+          projectId: "cartasker-ce66a",
+          storageBucket: "cartasker-ce66a.appspot.com",
+          messagingSenderId: "137314238220",
+          appId: "1:137314238220:web:ed87596fb975c0df1f1329"
+      };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Add a new note
+        function addNote() {
+            const noteInput = document.getElementById('noteInput');
+            const noteText = noteInput.value.trim();
+            if (noteText) {
+                database.ref('notes').push().set({
+                    text: noteText,
+                    timestamp: Date.now()
+                });
+                noteInput.value = '';
+            }
+        }
+
+        // Delete a note
+        function deleteNote(noteId) {
+            database.ref('notes/' + noteId).remove();
+        }
+
+        // Listen for changes in the database and update the UI
+        database.ref('notes').on('value', (snapshot) => {
+            const notesDiv = document.getElementById('notes');
+            notesDiv.innerHTML = '';
+            snapshot.forEach((childSnapshot) => {
+                const noteId = childSnapshot.key;
+                const noteData = childSnapshot.val();
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note';
+                noteElement.innerHTML = `
+                    ${noteData.text}
+                    <span class="delete-btn" onclick="deleteNote('${noteId}')">❌</span>
+                `;
+                notesDiv.appendChild(noteElement);
+            });
+        });
+    </script>
 </body>
 </html>
